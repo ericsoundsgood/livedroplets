@@ -223,14 +223,28 @@ export default function RainforestExperience() {
       nightIframeRef.current.style.willChange = 'opacity';
     }
 
-    // Update volumes
-    updateVideoVolumes();
-  }, [dropletPosition.y, playersReady, audioFadeValue]);
+    // Update volumes - force update on iOS after audio is enabled
+    if (isIOS && audioEnabled) {
+      // Add a small delay to ensure iOS processes the volume change
+      setTimeout(() => {
+        updateVideoVolumes();
+      }, 50);
+    } else if (!isIOS) {
+      updateVideoVolumes();
+    }
+  }, [dropletPosition.y, playersReady, audioFadeValue, audioEnabled]);
 
   // Update volumes when audio fade changes
   useEffect(() => {
     updateVideoVolumes();
   }, [audioFadeValue]);
+
+  // iOS-specific: Force volume updates when dragging
+  useEffect(() => {
+    if (isIOS && audioEnabled && playersReady) {
+      updateVideoVolumes();
+    }
+  }, [dropletPosition, isIOS, audioEnabled, playersReady]);
 
   // Start the experience when user clicks
   const handleStart = async () => {
@@ -307,6 +321,7 @@ export default function RainforestExperience() {
               ...(isIOS && {
                 minWidth: '177.78vh',
                 minHeight: '56.25vw',
+                transform: 'translateX(15%)', // Shift right to show more sky
               })
             }}
           />
@@ -327,6 +342,7 @@ export default function RainforestExperience() {
               ...(isIOS && {
                 minWidth: '177.78vh',
                 minHeight: '56.25vw',
+                transform: 'translateX(15%)', // Shift right to show more sky
               })
             }}
           />
