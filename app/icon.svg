@@ -22,9 +22,6 @@
     </filter>
   </defs>
   
-  <!-- Dark background for contrast -->
-  <rect width="64" height="72" fill="#000000"/>
-  
   <!-- Main droplet shape -->
   <path
     d="M32 8c0 0-24 24-24 40c0 13.255 10.745 24 24 24s24-10.745 24-24c0-16-24-40-24-40z"
