@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Live Droplets - Interactive Rainforest Experience
 
-## Getting Started
+An immersive single-page web experience featuring a draggable water droplet that controls both visual and audio elements of a rainforest scene.
 
-First, run the development server:
+## Features
 
+- **Interactive Droplet**: Drag the water droplet anywhere on the screen
+- **Day/Night Transitions**: Vertical movement controls the blend between day and night scenes
+  - Top = Daytime
+  - Bottom = Nighttime
+  - Middle = Twilight blend
+- **Dynamic Soundscape**: Horizontal movement controls the rain intensity
+  - Left = Light, gentle rain ambience
+  - Right = Intense, heavy rain sounds
+- **Smooth Transitions**: Eased blending for natural, magical feel
+- **Touch Support**: Works on both desktop and mobile devices
+
+## Current Status
+
+The application is using **placeholder assets** for development:
+- Video files: Sample videos from Google's common data storage
+- Audio files: Sample audio tracks as placeholders
+
+## Assets Needed
+
+To complete the experience, you'll need:
+
+1. **Day Video** (1080p, seamless loop)
+   - Rainforest scene during daytime
+   - Should match the framing of the night video
+
+2. **Night Video** (1080p, seamless loop)
+   - Same rainforest scene at nighttime
+   - Must align perfectly with day video for smooth crossfade
+
+3. **Light Rain Audio** (seamless loop)
+   - Gentle rainforest ambience
+   - Light rain sounds, bird calls, subtle nature sounds
+
+4. **Intense Rain Audio** (seamless loop)
+   - Heavy rain and storm sounds
+   - Thunder optional but adds drama
+
+## How to Add Your Assets
+
+1. Place your video files in the `public` folder
+2. Update the video `src` attributes in `app/components/RainforestExperience.tsx`
+3. Update the audio `src` attributes in the same file
+
+## Performance Optimization
+
+The app is optimized for:
+- Fast initial load with lazy media loading
+- Smooth 60fps interactions
+- Minimal CPU usage during idle states
+- Efficient video crossfading using CSS opacity
+
+## Deployment
+
+Ready for deployment on Vercel:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+# Deploy to Vercel
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm install
+npm run dev
+# Open http://localhost:3000
+```
