@@ -90,13 +90,7 @@ export default function RainforestExperience() {
               dayPlayerRef.current.playVideo();
               nightPlayerRef.current.playVideo();
               
-              // Unmute after a short delay to enable audio
-              setTimeout(() => {
-                if (typeof dayPlayerRef.current.unMute === 'function') {
-                  dayPlayerRef.current.unMute();
-                  nightPlayerRef.current.unMute();
-                }
-              }, 1000);
+              // Don't unmute here - let the fade-in handle it
             }
           }
         } catch (error) {
@@ -147,6 +141,20 @@ export default function RainforestExperience() {
       clearInterval(audioFadeIntervalRef.current);
     }
 
+    // Unmute players after a short delay to ensure they're playing
+    setTimeout(() => {
+      if (dayPlayerRef.current && nightPlayerRef.current) {
+        try {
+          if (typeof dayPlayerRef.current.unMute === 'function') {
+            dayPlayerRef.current.unMute();
+            nightPlayerRef.current.unMute();
+          }
+        } catch (error) {
+          console.error('Error unmuting players:', error);
+        }
+      }
+    }, 500); // Unmute after 500ms to ensure videos are playing
+
     const fadeStep = 0.0167; // 1/60 to match 3-second video fade (60 steps)
     const fadeInterval = 50; // How often to update (ms)
 
@@ -192,7 +200,7 @@ export default function RainforestExperience() {
   // Start the experience when user clicks
   const handleStart = async () => {
     setIsStarted(true);
-
+    
     // Fade in videos and audio simultaneously after 1 second delay
     setTimeout(() => {
       setVideosFadedIn(true);
@@ -249,13 +257,14 @@ export default function RainforestExperience() {
           <iframe
             ref={dayIframeRef}
             id="day-player"
-            className="absolute inset-0 w-full h-full scale-125 origin-center"
+            className="absolute inset-0 w-full h-full scale-150 origin-center"
             src={getYouTubeEmbedUrl('nZUMdnky11E')}
             allow="autoplay; fullscreen"
             style={{ 
               opacity: dayOpacity,
               pointerEvents: 'none',
-              border: 'none'
+              border: 'none',
+              objectFit: 'cover'
             }}
           />
           
@@ -263,22 +272,23 @@ export default function RainforestExperience() {
           <iframe
             ref={nightIframeRef}
             id="night-player"
-            className="absolute inset-0 w-full h-full scale-125 origin-center"
+            className="absolute inset-0 w-full h-full scale-150 origin-center"
             src={getYouTubeEmbedUrl('_hEN8q2g9qQ')}
             allow="autoplay; fullscreen"
             style={{ 
               opacity: nightOpacity,
               pointerEvents: 'none',
-              border: 'none'
+              border: 'none',
+              objectFit: 'cover'
             }}
           />
           
           {/* Overlay to hide any remaining YouTube UI */}
           <div className="absolute inset-0 pointer-events-none">
             {/* Top gradient to hide title/controls if they appear */}
-            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/50 to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black to-transparent" />
             {/* Bottom gradient to hide controls */}
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
           </div>
         </div>
       )}
