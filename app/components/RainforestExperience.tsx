@@ -72,6 +72,18 @@ export default function RainforestExperience() {
             // Set initial volumes to 0 for fade-in effect
             dayPlayerRef.current.setVolume(0);
             nightPlayerRef.current.setVolume(0);
+            
+            // iOS specific: Try to play videos programmatically
+            // This only works if triggered by user interaction (the click to start)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS && typeof dayPlayerRef.current.playVideo === 'function') {
+              try {
+                dayPlayerRef.current.playVideo();
+                nightPlayerRef.current.playVideo();
+              } catch (e) {
+                console.log('iOS autoplay attempt:', e);
+              }
+            }
           }
         } catch (error) {
           console.error('Error setting initial volumes:', error);
@@ -119,6 +131,19 @@ export default function RainforestExperience() {
   const startAudioFade = () => {
     if (audioFadeIntervalRef.current) {
       clearInterval(audioFadeIntervalRef.current);
+    }
+
+    // iOS specific: Unmute videos when starting audio fade
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS && playersReady && dayPlayerRef.current && nightPlayerRef.current) {
+      try {
+        if (typeof dayPlayerRef.current.unMute === 'function') {
+          dayPlayerRef.current.unMute();
+          nightPlayerRef.current.unMute();
+        }
+      } catch (e) {
+        console.log('iOS unmute attempt:', e);
+      }
     }
 
     const fadeStep = 0.0167; // 1/60 to match 3-second video fade (60 steps)
@@ -185,6 +210,8 @@ export default function RainforestExperience() {
 
   // YouTube embed parameters - back to original without mute
   const getYouTubeEmbedUrl = (videoId: string) => {
+    const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
     const params = new URLSearchParams({
       autoplay: '1',
       controls: '0',
@@ -201,6 +228,12 @@ export default function RainforestExperience() {
       start: '300', // Start at 5 minutes (300 seconds)
       origin: typeof window !== 'undefined' ? window.location.origin : ''
     });
+    
+    // Only add mute parameter for iOS to enable autoplay
+    if (isIOS) {
+      params.append('mute', '1');
+    }
+    
     return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
   };
 
