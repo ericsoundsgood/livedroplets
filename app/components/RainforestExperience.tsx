@@ -17,6 +17,7 @@ export default function RainforestExperience() {
   const [videosFadedIn, setVideosFadedIn] = useState(false);
   const [audioFadeValue, setAudioFadeValue] = useState(0); // 0 to 1 for smooth fade
   const [playersReady, setPlayersReady] = useState(false);
+  const [playersMuted, setPlayersMuted] = useState(true); // Track mute state
   const dayIframeRef = useRef<HTMLIFrameElement>(null);
   const nightIframeRef = useRef<HTMLIFrameElement>(null);
   const dayPlayerRef = useRef<any>(null);
@@ -45,6 +46,9 @@ export default function RainforestExperience() {
       dayPlayerRef.current = new window.YT.Player(dayIframeRef.current, {
         events: {
           onReady: (event: any) => {
+            // Immediately set volume to 0 and ensure muted
+            event.target.mute();
+            event.target.setVolume(0);
             checkPlayersReady();
           }
         }
@@ -53,6 +57,9 @@ export default function RainforestExperience() {
       nightPlayerRef.current = new window.YT.Player(nightIframeRef.current, {
         events: {
           onReady: (event: any) => {
+            // Immediately set volume to 0 and ensure muted
+            event.target.mute();
+            event.target.setVolume(0);
             checkPlayersReady();
           }
         }
@@ -62,23 +69,20 @@ export default function RainforestExperience() {
 
   const checkPlayersReady = () => {
     if (dayPlayerRef.current && nightPlayerRef.current) {
-      // Add a small delay to ensure API is fully ready
-      setTimeout(() => {
-        try {
-          // Test if the methods are available
-          if (typeof dayPlayerRef.current.setVolume === 'function' && 
-              typeof nightPlayerRef.current.setVolume === 'function') {
-            setPlayersReady(true);
-            // Set initial volumes to 0 for fade-in effect
-            dayPlayerRef.current.setVolume(0);
-            nightPlayerRef.current.setVolume(0);
-          }
-        } catch (error) {
-          console.error('Error setting initial volumes:', error);
-          // Retry after another delay
-          setTimeout(checkPlayersReady, 1000);
+      // Check if both players are ready
+      try {
+        // Test if the methods are available
+        if (typeof dayPlayerRef.current.setVolume === 'function' && 
+            typeof nightPlayerRef.current.setVolume === 'function' &&
+            typeof dayPlayerRef.current.mute === 'function' &&
+            typeof nightPlayerRef.current.mute === 'function') {
+          setPlayersReady(true);
         }
-      }, 500);
+      } catch (error) {
+        console.error('Error checking player readiness:', error);
+        // Retry after a delay
+        setTimeout(checkPlayersReady, 500);
+      }
     }
   };
 
@@ -115,8 +119,24 @@ export default function RainforestExperience() {
     }
   };
 
+  // Unmute players when ready to fade in audio
+  const unmutePlayers = () => {
+    if (playersReady && dayPlayerRef.current && nightPlayerRef.current && playersMuted) {
+      try {
+        dayPlayerRef.current.unMute();
+        nightPlayerRef.current.unMute();
+        setPlayersMuted(false);
+      } catch (error) {
+        console.error('Error unmuting players:', error);
+      }
+    }
+  };
+
   // Start audio fade-in - synced with video fade (3 seconds)
   const startAudioFade = () => {
+    // Unmute just before starting the fade
+    unmutePlayers();
+    
     if (audioFadeIntervalRef.current) {
       clearInterval(audioFadeIntervalRef.current);
     }
@@ -170,7 +190,10 @@ export default function RainforestExperience() {
     // Fade in videos and audio simultaneously after 1 second delay
     setTimeout(() => {
       setVideosFadedIn(true);
-      startAudioFade(); // Start audio fade at the same time as video fade
+      // Add a small delay before starting audio to ensure players are fully ready
+      setTimeout(() => {
+        startAudioFade(); // Start audio fade after ensuring readiness
+      }, 100);
     }, 1000);
   };
 
@@ -183,7 +206,7 @@ export default function RainforestExperience() {
     };
   }, []);
 
-  // YouTube embed parameters - now with audio enabled
+  // YouTube embed parameters - now with mute=1 initially
   const getYouTubeEmbedUrl = (videoId: string) => {
     const params = new URLSearchParams({
       autoplay: '1',
@@ -197,6 +220,7 @@ export default function RainforestExperience() {
       fs: '0',
       iv_load_policy: '3',
       enablejsapi: '1',
+      mute: '1', // Start muted to prevent audio snap
       start: '300', // Start at 5 minutes (300 seconds)
       origin: typeof window !== 'undefined' ? window.location.origin : ''
     });
