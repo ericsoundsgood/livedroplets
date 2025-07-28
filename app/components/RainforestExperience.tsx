@@ -17,11 +17,21 @@ export default function RainforestExperience() {
   const [videosFadedIn, setVideosFadedIn] = useState(false);
   const [audioFadeValue, setAudioFadeValue] = useState(0); // 0 to 1 for smooth fade
   const [playersReady, setPlayersReady] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(false);
   const dayIframeRef = useRef<HTMLIFrameElement>(null);
   const nightIframeRef = useRef<HTMLIFrameElement>(null);
   const dayPlayerRef = useRef<any>(null);
   const nightPlayerRef = useRef<any>(null);
   const audioFadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Detect iOS
+  useEffect(() => {
+    const checkIOS = () => {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    };
+    setIsIOS(checkIOS());
+  }, []);
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -141,19 +151,22 @@ export default function RainforestExperience() {
       clearInterval(audioFadeIntervalRef.current);
     }
 
-    // Unmute players after a short delay to ensure they're playing
-    setTimeout(() => {
-      if (dayPlayerRef.current && nightPlayerRef.current) {
-        try {
-          if (typeof dayPlayerRef.current.unMute === 'function') {
-            dayPlayerRef.current.unMute();
-            nightPlayerRef.current.unMute();
+    // For iOS, we need user interaction to enable audio
+    if (!isIOS || audioEnabled) {
+      // Unmute players after a short delay to ensure they're playing
+      setTimeout(() => {
+        if (dayPlayerRef.current && nightPlayerRef.current) {
+          try {
+            if (typeof dayPlayerRef.current.unMute === 'function') {
+              dayPlayerRef.current.unMute();
+              nightPlayerRef.current.unMute();
+            }
+          } catch (error) {
+            console.error('Error unmuting players:', error);
           }
-        } catch (error) {
-          console.error('Error unmuting players:', error);
         }
-      }
-    }, 500); // Unmute after 500ms to ensure videos are playing
+      }, 500); // Unmute after 500ms to ensure videos are playing
+    }
 
     const fadeStep = 0.0167; // 1/60 to match 3-second video fade (60 steps)
     const fadeInterval = 50; // How often to update (ms)
@@ -171,6 +184,22 @@ export default function RainforestExperience() {
         return newValue;
       });
     }, fadeInterval);
+  };
+
+  // Handle iOS audio enable on first touch after videos start
+  const handleIOSAudioEnable = () => {
+    if (isIOS && !audioEnabled && playersReady) {
+      setAudioEnabled(true);
+      if (dayPlayerRef.current && nightPlayerRef.current) {
+        try {
+          dayPlayerRef.current.unMute();
+          nightPlayerRef.current.unMute();
+          updateVideoVolumes();
+        } catch (error) {
+          console.error('Error enabling iOS audio:', error);
+        }
+      }
+    }
   };
 
   // Update video opacity and volumes based on vertical position
@@ -243,7 +272,10 @@ export default function RainforestExperience() {
   const { dayOpacity, nightOpacity } = getInitialOpacities();
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
+    <div 
+      className="relative w-full h-screen overflow-hidden bg-black"
+      onTouchStart={handleIOSAudioEnable}
+    >
       {/* Video layers */}
       {isStarted && (
         <div 
@@ -257,7 +289,7 @@ export default function RainforestExperience() {
           <iframe
             ref={dayIframeRef}
             id="day-player"
-            className="absolute inset-0 w-full h-full scale-150 origin-center"
+            className={`absolute inset-0 w-full h-full origin-center ${isIOS ? 'scale-[2]' : 'scale-150'}`}
             src={getYouTubeEmbedUrl('nZUMdnky11E')}
             allow="autoplay; fullscreen"
             style={{ 
@@ -272,7 +304,7 @@ export default function RainforestExperience() {
           <iframe
             ref={nightIframeRef}
             id="night-player"
-            className="absolute inset-0 w-full h-full scale-150 origin-center"
+            className={`absolute inset-0 w-full h-full origin-center ${isIOS ? 'scale-[2]' : 'scale-150'}`}
             src={getYouTubeEmbedUrl('_hEN8q2g9qQ')}
             allow="autoplay; fullscreen"
             style={{ 
@@ -289,7 +321,21 @@ export default function RainforestExperience() {
             <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black to-transparent" />
             {/* Bottom gradient to hide controls */}
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
+            {/* Side gradients for mobile */}
+            {isIOS && (
+              <>
+                <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black to-transparent" />
+                <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-black to-transparent" />
+              </>
+            )}
           </div>
+        </div>
+      )}
+
+      {/* iOS audio hint */}
+      {isIOS && isStarted && !audioEnabled && playersReady && (
+        <div className="absolute top-4 left-4 right-4 bg-black/50 text-white text-sm p-2 rounded text-center z-40">
+          Tap anywhere to enable sound
         </div>
       )}
 
