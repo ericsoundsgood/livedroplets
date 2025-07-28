@@ -144,10 +144,14 @@ export default function RainforestExperience() {
     const { nightBlend } = calculateBlends();
     
     if (dayIframeRef.current && nightIframeRef.current) {
-      // Day video fades out as we go down
+      // Use transform3d for Safari performance
       dayIframeRef.current.style.opacity = `${1 - nightBlend}`;
-      // Night video fades in as we go down
+      dayIframeRef.current.style.transform = 'translateZ(0)';
+      dayIframeRef.current.style.willChange = 'opacity';
+      
       nightIframeRef.current.style.opacity = `${nightBlend}`;
+      nightIframeRef.current.style.transform = 'translateZ(0)';
+      nightIframeRef.current.style.willChange = 'opacity';
     }
 
     // Update volumes

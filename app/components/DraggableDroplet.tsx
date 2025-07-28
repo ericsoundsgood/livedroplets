@@ -88,13 +88,14 @@ export default function DraggableDroplet({ position, onPositionChange }: Draggab
         className={`
           absolute w-16 h-20 
           transform -translate-x-1/2 -translate-y-1/2
-          transition-all duration-75
+          ${isDragging ? '' : 'transition-transform duration-75'}
           ${isDragging ? 'scale-110' : 'scale-100 hover:scale-105'}
           no-select
         `}
         style={{
           left: `${position.x}%`,
           top: `${position.y}%`,
+          willChange: isDragging ? 'transform' : 'auto',
         }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -109,6 +110,10 @@ export default function DraggableDroplet({ position, onPositionChange }: Draggab
               WebkitBackdropFilter: 'blur(6px)',
               clipPath: 'path("M32 8c0 0-24 24-24 40c0 13.255 10.745 24 24 24s24-10.745 24-24c0-16-24-40-24-40z")',
               transform: 'scale(1)',
+              // Safari performance optimization
+              transform3d: 'translateZ(0)',
+              backfaceVisibility: 'hidden',
+              perspective: 1000,
             }}
           />
           
@@ -117,12 +122,13 @@ export default function DraggableDroplet({ position, onPositionChange }: Draggab
             viewBox="0 0 64 72"
             className={`
               w-full h-full relative z-10
-              ${isDragging ? 'animate-pulse' : ''}
             `}
             style={{
               filter: isDragging 
                 ? 'drop-shadow(0 0 25px rgba(255, 255, 255, 0.7))' 
-                : 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.4))'
+                : 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.4))',
+              // Safari performance optimization
+              transform: 'translateZ(0)',
             }}
           >
             <defs>
