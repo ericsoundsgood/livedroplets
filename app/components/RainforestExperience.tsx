@@ -75,7 +75,7 @@ export default function RainforestExperience() {
             
             // iOS specific: Try to play videos programmatically
             // This only works if triggered by user interaction (the click to start)
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
             if (isIOS && typeof dayPlayerRef.current.playVideo === 'function') {
               try {
                 dayPlayerRef.current.playVideo();
@@ -134,7 +134,7 @@ export default function RainforestExperience() {
     }
 
     // iOS specific: Unmute videos when starting audio fade
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     if (isIOS && playersReady && dayPlayerRef.current && nightPlayerRef.current) {
       try {
         if (typeof dayPlayerRef.current.unMute === 'function') {
@@ -210,7 +210,7 @@ export default function RainforestExperience() {
 
   // YouTube embed parameters - back to original without mute
   const getYouTubeEmbedUrl = (videoId: string) => {
-    const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     
     const params = new URLSearchParams({
       autoplay: '1',
