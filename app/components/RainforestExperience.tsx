@@ -197,6 +197,7 @@ export default function RainforestExperience() {
       fs: '0',
       iv_load_policy: '3',
       enablejsapi: '1',
+      playsinline: '1', // Enable inline playback on iOS
       start: '300', // Start at 5 minutes (300 seconds)
       origin: typeof window !== 'undefined' ? window.location.origin : ''
     });
