@@ -132,6 +132,9 @@ export default function RainforestExperience() {
   // Update video volumes based on blend and fade
   const updateVideoVolumes = () => {
     if (!playersReady || !dayPlayerRef.current || !nightPlayerRef.current) return;
+    
+    // On iOS, only update volumes if audio is enabled
+    if (isIOS && !audioEnabled) return;
 
     try {
       const { nightBlend } = calculateBlends();
@@ -194,7 +197,10 @@ export default function RainforestExperience() {
         try {
           dayPlayerRef.current.unMute();
           nightPlayerRef.current.unMute();
-          updateVideoVolumes();
+          // Force immediate volume update for proper blending
+          setTimeout(() => {
+            updateVideoVolumes();
+          }, 100);
         } catch (error) {
           console.error('Error enabling iOS audio:', error);
         }
@@ -289,14 +295,19 @@ export default function RainforestExperience() {
           <iframe
             ref={dayIframeRef}
             id="day-player"
-            className={`absolute inset-0 w-full h-full origin-center ${isIOS ? 'scale-[2]' : 'scale-150'}`}
+            className={`absolute inset-0 w-full h-full origin-center ${isIOS ? 'scale-[2.5]' : 'scale-150'}`}
             src={getYouTubeEmbedUrl('nZUMdnky11E')}
             allow="autoplay; fullscreen"
             style={{ 
               opacity: dayOpacity,
               pointerEvents: 'none',
               border: 'none',
-              objectFit: 'cover'
+              objectFit: 'cover',
+              // Force aspect ratio preservation on iOS
+              ...(isIOS && {
+                minWidth: '177.78vh',
+                minHeight: '56.25vw',
+              })
             }}
           />
           
@@ -304,14 +315,19 @@ export default function RainforestExperience() {
           <iframe
             ref={nightIframeRef}
             id="night-player"
-            className={`absolute inset-0 w-full h-full origin-center ${isIOS ? 'scale-[2]' : 'scale-150'}`}
+            className={`absolute inset-0 w-full h-full origin-center ${isIOS ? 'scale-[2.5]' : 'scale-150'}`}
             src={getYouTubeEmbedUrl('_hEN8q2g9qQ')}
             allow="autoplay; fullscreen"
             style={{ 
               opacity: nightOpacity,
               pointerEvents: 'none',
               border: 'none',
-              objectFit: 'cover'
+              objectFit: 'cover',
+              // Force aspect ratio preservation on iOS
+              ...(isIOS && {
+                minWidth: '177.78vh',
+                minHeight: '56.25vw',
+              })
             }}
           />
           
