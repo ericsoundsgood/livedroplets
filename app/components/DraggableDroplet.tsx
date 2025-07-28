@@ -109,9 +109,8 @@ export default function DraggableDroplet({ position, onPositionChange }: Draggab
               backdropFilter: 'blur(6px)',
               WebkitBackdropFilter: 'blur(6px)',
               clipPath: 'path("M32 8c0 0-24 24-24 40c0 13.255 10.745 24 24 24s24-10.745 24-24c0-16-24-40-24-40z")',
-              transform: 'scale(1)',
+              transform: 'translateZ(0) scale(1)',
               // Safari performance optimization
-              transform3d: 'translateZ(0)',
               backfaceVisibility: 'hidden',
               perspective: 1000,
             }}
