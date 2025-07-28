@@ -17,11 +17,26 @@ export default function RainforestExperience() {
   const [videosFadedIn, setVideosFadedIn] = useState(false);
   const [audioFadeValue, setAudioFadeValue] = useState(0); // 0 to 1 for smooth fade
   const [playersReady, setPlayersReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileVideosStarted, setMobileVideosStarted] = useState(false);
   const dayIframeRef = useRef<HTMLIFrameElement>(null);
   const nightIframeRef = useRef<HTMLIFrameElement>(null);
   const dayPlayerRef = useRef<any>(null);
   const nightPlayerRef = useRef<any>(null);
   const audioFadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -73,15 +88,13 @@ export default function RainforestExperience() {
             dayPlayerRef.current.setVolume(0);
             nightPlayerRef.current.setVolume(0);
             
-            // iOS specific: Try to play videos programmatically
-            // This only works if triggered by user interaction (the click to start)
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-            if (isIOS && typeof dayPlayerRef.current.playVideo === 'function') {
+            // For desktop, try to start videos automatically
+            if (!isMobile) {
               try {
                 dayPlayerRef.current.playVideo();
                 nightPlayerRef.current.playVideo();
               } catch (e) {
-                console.log('iOS autoplay attempt:', e);
+                console.log('Autoplay attempt:', e);
               }
             }
           }
@@ -91,6 +104,24 @@ export default function RainforestExperience() {
           setTimeout(checkPlayersReady, 1000);
         }
       }, 500);
+    }
+  };
+
+  // Mobile-specific play handler
+  const handleMobilePlay = () => {
+    if (playersReady && dayPlayerRef.current && nightPlayerRef.current) {
+      try {
+        dayPlayerRef.current.playVideo();
+        nightPlayerRef.current.playVideo();
+        setMobileVideosStarted(true);
+        
+        // Start audio fade after a short delay
+        setTimeout(() => {
+          startAudioFade();
+        }, 1000);
+      } catch (e) {
+        console.error('Mobile play error:', e);
+      }
     }
   };
 
@@ -133,16 +164,15 @@ export default function RainforestExperience() {
       clearInterval(audioFadeIntervalRef.current);
     }
 
-    // iOS specific: Unmute videos when starting audio fade
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    if (isIOS && playersReady && dayPlayerRef.current && nightPlayerRef.current) {
+    // Mobile: Unmute videos when starting audio fade
+    if (isMobile && playersReady && dayPlayerRef.current && nightPlayerRef.current) {
       try {
         if (typeof dayPlayerRef.current.unMute === 'function') {
           dayPlayerRef.current.unMute();
           nightPlayerRef.current.unMute();
         }
       } catch (e) {
-        console.log('iOS unmute attempt:', e);
+        console.log('Mobile unmute attempt:', e);
       }
     }
 
@@ -195,7 +225,11 @@ export default function RainforestExperience() {
     // Fade in videos and audio simultaneously after 1 second delay
     setTimeout(() => {
       setVideosFadedIn(true);
-      startAudioFade(); // Start audio fade at the same time as video fade
+      // Desktop: start audio fade immediately
+      if (!isMobile) {
+        startAudioFade();
+      }
+      // Mobile: wait for user to click play button
     }, 1000);
   };
 
@@ -208,12 +242,10 @@ export default function RainforestExperience() {
     };
   }, []);
 
-  // YouTube embed parameters - back to original without mute
+  // YouTube embed parameters
   const getYouTubeEmbedUrl = (videoId: string) => {
-    const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    
     const params = new URLSearchParams({
-      autoplay: '1',
+      autoplay: isMobile ? '0' : '1', // No autoplay on mobile
       controls: '0',
       disablekb: '1',
       loop: '1',
@@ -229,8 +261,8 @@ export default function RainforestExperience() {
       origin: typeof window !== 'undefined' ? window.location.origin : ''
     });
     
-    // Only add mute parameter for iOS to enable autoplay
-    if (isIOS) {
+    // Add mute for mobile to help with loading
+    if (isMobile) {
       params.append('mute', '1');
     }
     
@@ -288,6 +320,20 @@ export default function RainforestExperience() {
         </div>
       )}
 
+      {/* Mobile play button overlay */}
+      {isStarted && isMobile && !mobileVideosStarted && playersReady && (
+        <div 
+          className="absolute inset-0 z-40 flex items-center justify-center bg-black/50"
+          onClick={handleMobilePlay}
+        >
+          <button className="bg-white/20 backdrop-blur-md rounded-full p-8 border border-white/30">
+            <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Start overlay - just the centered droplet, no text */}
       {!isStarted && (
         <div 
@@ -330,7 +376,7 @@ export default function RainforestExperience() {
       )}
 
       {/* Draggable droplet - only show after started */}
-      {isStarted && (
+      {isStarted && (!isMobile || mobileVideosStarted) && (
         <DraggableDroplet
           position={dropletPosition}
           onPositionChange={setDropletPosition}
